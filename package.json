@@ -1,0 +1,30 @@
+{
+  "name": "FPS",
+  "version": "0.0.1",
+  "description": "A webGL game",
+  "main": "Source/main.js",
+  "scripts": {
+    "submodules": "git submodule update --recursive --init",
+    "watch": "watchify Source/main.js -t cssify -d -o Static/deployed.js -v"
+  },
+  "browserify": {
+    "transform": [
+      "cssify",
+      "brfs"
+    ]
+  },
+  "watchify": {
+    "transform": [
+      "cssify",
+      "brfs"
+    ]
+  },
+  "dependencies": {
+    "brfs": "^1.2.0",
+    "cssify": "^0.5.1"
+  },
+  "devDependencies": {
+    "watchify": "^1.0.2"
+  },
+  "author": "Adnan Wahab, Felix Tripier, Joseph Sample"
+}

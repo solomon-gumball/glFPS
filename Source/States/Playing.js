@@ -2,10 +2,7 @@ var NONE = 'none';
 var VISIBLE = 'inline';
 
 var EventHandler       = require('../Events/EventHandler');
-var FamousEngine       = require('../../Libraries/MixedMode/src/famous/core/Engine');
-var Primitives         = require('../../Libraries/MixedMode/src/famous/gl/primitives');
-var Material           = require('../../Libraries/MixedMode/src/famous/gl/materials');
-// var ImageLoader        = require('../../')
+var KeyHandler         = require('../Inputs/KeyHandler');
 
 var Playing          = {};
 
@@ -17,36 +14,16 @@ EventHandler.setOutputHandler(Playing, Playing.eventOutput);
 
 Playing.initialize = function initialize()
 {
-	this.container = document.getElementById('playing');
- 	this.context = FamousEngine.createContext(this.container);
- 	var planeNode = this.context.addChild();
- 	var plane = planeNode.addComponent(Primitives.plane, {
- 		size: [500, 500, 1]
- 	});
-
- 	planeNode.addComponent(Material, {
- 		image: '/Assets/tile.png',
- 		// fsChunk: {
- 		// 	defines: '',
- 		// 	apply: 'color = vec4(1, 0, 0, 1);'
- 		// }
- 	});
-
- 	var offsetX = 0.1;
- 	var offsetY = 0.1;
-
- 	plane.coords = [
- 		[offsetX + 0.2, offsetY + 0.2],
- 		[offsetX + 0.0, offsetY + 0.2],
- 		[offsetX + 0.2, offsetY + 0.0],
- 		[offsetX + 0.0, offsetY + 0.0]
- 	];
- 	plane.compile();
+	KeyHandler.init();
+	KeyHandler.on('A', function () {
+		console.log('a');
+	});
+	window.aba = KeyHandler;
 };
 
 Playing.update     = function update()
 {
-	FamousEngine.step();
+	KeyHandler.update();
 };
 
 Playing.show       = function show()

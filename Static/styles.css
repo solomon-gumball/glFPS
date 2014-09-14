@@ -1,0 +1,34 @@
+* {
+    margin:0;
+    padding:0;
+}
+
+html, body {
+    width:100%;
+    height:100%;
+}
+
+#loading {
+    width:100%;
+    height:100%;
+    display: none;
+}
+
+#menu {
+    width:100%;
+    height:100%;
+    display: none;
+}
+
+#game {
+    width:100%;
+    height:100%;
+    background-color: #000;
+}
+
+#playing {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}

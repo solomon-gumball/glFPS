@@ -4,6 +4,7 @@ var Menu    = require('./States/Menu');
 var Playing = require('./States/Playing');
 var EventHandler = require('./Events/EventHandler');
 var ImageLoader  = require('./Game/ImageLoader');
+var XMLLoader    = require('./Game/XMLLoader');
 var Viewport     = require('./Game/Viewport');
 
 var Controller = new EventHandler();
@@ -25,8 +26,31 @@ var spritesheet = {
 	data: {}
 };
 
+var vertexShader = {
+	type: 'xml',
+	source: '/Shaders/VertexShader.glsl',
+	data: {}
+};
+
+var fragmentShader = {
+	type: 'xml',
+	source: '/Shaders/FragmentShader.glsl',
+	data: {}
+};
+
+var worldData = {
+	type: 'xml',
+	source: '/GameData/world.txt',
+	data: {}
+}
+
 Loading.register(ImageLoader);
+Loading.register(XMLLoader);
+
 Loading.load(spritesheet);
+Loading.load(vertexShader);
+Loading.load(fragmentShader);
+Loading.load(worldData);
 
 Engine.setState(Loading);
 

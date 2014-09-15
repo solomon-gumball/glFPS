@@ -5,12 +5,10 @@
   "main": "Source/main.js",
   "scripts": {
     "submodules": "git submodule update --recursive --init",
-    "watch": "watchify Source/main.js -t cssify -d -o Static/deployed.js -v"
+    "watch": "watchify Source/main.js -d -o Static/deployed.js -v"
   },
   "browserify": {
     "transform": [
-      "cssify",
-      "brfs"
     ]
   },
   "watchify": {

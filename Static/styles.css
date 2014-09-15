@@ -26,6 +26,14 @@ html, body {
     background-color: #000;
 }
 
+#renderer {
+    width:100%;
+    height:100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
 #playing {
     position: absolute;
     width: 100%;

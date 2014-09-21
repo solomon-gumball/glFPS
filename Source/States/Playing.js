@@ -22,7 +22,8 @@ Playing.initialize = function initialize()
 	this.renderer = new Renderer({
 		textures: [
 			'../Assets/metal2.png',
-			'../Assets/handsSpritesheet.png'
+			'../Assets/handsSpritesheet.png',
+			'../Assets/alienSprite.png'
 		]
 	});
 };

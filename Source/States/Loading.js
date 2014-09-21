@@ -48,7 +48,14 @@ Loading.initialize = function initialize()
 
 Loading.load       = function load(asset)
 {
-    assetStack.push(asset);
+    if(Array.isArray(asset))
+    {
+        Array.prototype.push.apply(assetStack, asset);
+    }
+    else
+    {
+        assetStack.push(asset);
+    }
 };
 
 Loading.show       = function show()
@@ -70,13 +77,10 @@ Loading.register   = function register(loader)
 
 function handleCompletedLoad(data)
 {
-    setTimeout(function()
-    {
-        var source = data.source;
-        var location = assetStack.indexOf(source);
-        if (location) assetStack.splice(location, 1);
-        if (!assetStack.length) Loading.eventOutput.emit(LOAD_COMPLETED);
-    }, 1000);
+    var source = data.source;
+    var location = assetStack.indexOf(source);
+    if (location) assetStack.splice(location, 1);
+    if (!assetStack.length) Loading.eventOutput.emit(LOAD_COMPLETED);
 }
 
 function handleResize()

@@ -3,6 +3,8 @@ var XMLLoader    = require('../Game/XMLLoader');
 var KeyHandler   = require('../Inputs/KeyHandler');
 var MouseTracker = require('../Inputs/MouseTracker');
 var Timer        = require('../Utilities/Timer');
+var Player       = require('./Player');
+var Alien        = require('./Alien');
 
 function Renderer (options) {
 	this.canvas = document.getElementById('renderer');
@@ -13,27 +15,33 @@ function Renderer (options) {
     this.lastFrame = 0;
     this.joggingAngle = 0;
 
+    this.enemies = [];
+
     initMatrices.call(this);
 
     this.initShaders();
     this.initTextures(options.textures);
     this.handleLoadedWorld();
-
+    this.initPlayer();
 
     MouseTracker.on('UPDATE', this.handleMouse.bind(this));
     KeyHandler.on('UPDATE', this.handleKeys.bind(this));
-    // KeyHandler.on('SPACE:PRESS', this.handleShoot.bind(this));
+    KeyHandler.on('SPACE:PRESS', function(){
+        console.log(this.player.position);
+    }.bind(this));
+
     window.onclick = this.handleShoot.bind(this);
 
     this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
     this.gl.enable(this.gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
-    this.gl.enable(this.gl.DEPTH_TEST);
+    // this.gl.enable(this.gl.DEPTH_TEST);
 }
 
 Renderer.prototype.update = function update () {
-	this.drawScene();
 	this.animate();
+    this.drawScene();
+    if(Math.random() > 0.99 && this.enemies.length < 10) this.generateEnemy();
 }
 
 Renderer.prototype.animate = function animate() {
@@ -41,27 +49,29 @@ Renderer.prototype.animate = function animate() {
     var newX;
     var newZ;
     if (this.lastFrame !== 0) {
+        var playerPosition = this.player.position;
         var elapsed = thisFrame - this.lastFrame;
-        if(zSpeed !== 0 || xSpeed !== 0) {
+        if(this.player.zSpeed !== 0 || this.player.xSpeed !== 0) {
 
-            newX = xPos - Math.sin(degToRad(yaw)) * zSpeed * elapsed;
-            newZ = zPos - Math.cos(degToRad(yaw)) * zSpeed * elapsed;
+            newX = playerPosition[0] - Math.sin(degToRad(this.player.rotation)) * this.player.zSpeed * elapsed;
+            newZ = playerPosition[2] - Math.cos(degToRad(this.player.rotation)) * this.player.zSpeed * elapsed;
 
-            newX = newX - Math.sin(degToRad(yaw - 90)) * xSpeed * elapsed;
-            newZ = newZ - Math.cos(degToRad(yaw - 90)) * xSpeed * elapsed;
+            newX = newX - Math.sin(degToRad(this.player.rotation - 90)) * this.player.xSpeed * elapsed;
+            newZ = newZ - Math.cos(degToRad(this.player.rotation - 90)) * this.player.xSpeed * elapsed;
 
             this.joggingAngle += elapsed * 0.6;
-            yPos = Math.sin(degToRad(this.joggingAngle)) / 20 + 0.4;
+            playerPosition[1] = Math.sin(degToRad(this.joggingAngle)) / 20 + 0.4;
 
             if(this.isInBounds(newX, newZ)) {
-                xPos = newX;
-                zPos = newZ;
+                playerPosition[0] = newX;
+                playerPosition[2] = newZ;
             }
         }
 
-        yaw += yawRate * elapsed;
-        pitch += pitchRate * elapsed;
+        this.player.rotation += this.player.rotationRate * elapsed;
+        // pitch += pitchRate * elapsed;
     }
+    this.updateEnemies();
     this.lastFrame = thisFrame;
 }
 
@@ -81,30 +91,20 @@ Renderer.prototype.isInBounds = function isInBounds(x, z) {
     return status;
 }
 
-var pitch = 0;
-var pitchRate = 0;
-
-var yaw = 0;
-var yawRate = 0;
-
-var xPos = 0;
-var yPos = 0.4;
-var zPos = 0;
-
-var zSpeed = 0;
-var xSpeed = 0;
+// var pitch = 0;
+// var pitchRate = 0;
 Renderer.prototype.handleKeys = function handleKeys (keyPressed) {
-    if      ( keyPressed['LEFT'] || keyPressed['A'] )  xSpeed = -0.003;
-    else if ( keyPressed['RIGHT'] || keyPressed['D'] ) xSpeed = 0.003;
-    else                                               xSpeed = 0;
+    if      ( keyPressed['LEFT'] || keyPressed['A'] )  this.player.xSpeed = -0.003;
+    else if ( keyPressed['RIGHT'] || keyPressed['D'] ) this.player.xSpeed = 0.003;
+    else                                               this.player.xSpeed = 0;
 
-    if      ( keyPressed['UP'] || keyPressed['W'] )   zSpeed = 0.003;
-    else if ( keyPressed['DOWN'] || keyPressed['S'] ) zSpeed = -0.003;
-    else                                              zSpeed = 0;
+    if      ( keyPressed['UP'] || keyPressed['W'] )   this.player.zSpeed = 0.003;
+    else if ( keyPressed['DOWN'] || keyPressed['S'] ) this.player.zSpeed = -0.003;
+    else                                              this.player.zSpeed = 0;
 }
 
 Renderer.prototype.handleMouse = function handleMouse (velocity) {
-    yawRate = velocity[0] * 3000.0;
+    this.player.rotationRate = velocity[0] * 3000.0;
 }
 
 Renderer.prototype.handleShoot = function handleShoot () {
@@ -112,12 +112,42 @@ Renderer.prototype.handleShoot = function handleShoot () {
     Timer.after(setHandSprite.bind(this, 0), 50);
 }
 
-var xPos = 0;
-var yPos = 0;
-var zPos = 0;
-var pitch = 0;
-var yaw = 0;
+var enemyStartPositions = [
+    [0.002894359141860439, 0.0, 3.69167231590234],
+    [3.263023868924414, 0.0, -0.05809362601548433],
+    [0.06240809255478197, 0.0, -3.6756300214165236],
+    [-3.8392868289650153, 0.0, 0.06440220118756014]
+]
+Renderer.prototype.initPlayer = function initPlayer () {
+    this.player = new Player({
+        position: [0, 0, 0.0]
+    });
+}
+
+Renderer.prototype.generateEnemy = function generateEnemy () {
+    var randomStartPos = enemyStartPositions[Math.floor(Math.random() * enemyStartPositions.length)];
+
+    this.enemies.push(new Alien({
+        position: randomStartPos,
+        context: this.gl,
+        texture: this.textures[2],
+        shaderProgram: shaderProgram,
+        player: this.player,
+        pMatrix: this.pMatrix,
+        mvMatrix: this.mvMatrix
+    }));
+}
+
+Renderer.prototype.updateEnemies = function updateEnemies () {
+    for(var i = 0; i < this.enemies.length; i++) {
+        this.enemies[i].update();
+    }
+}
+
+// var pitch = 0;
 Renderer.prototype.drawScene = function drawScene() {
+    var playerPosition = this.player.position;
+
     this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
@@ -128,9 +158,9 @@ Renderer.prototype.drawScene = function drawScene() {
     mat4.identity(this.mvMatrix);
 
     /* MOVE CAMERA */
-    mat4.rotate(this.mvMatrix, degToRad(-pitch), [1, 0, 0]);
-    mat4.rotate(this.mvMatrix, degToRad(-yaw),   [0, 1, 0]);
-    mat4.translate(this.mvMatrix, [-xPos, -yPos, -zPos]);
+    // mat4.rotate(this.mvMatrix, degToRad(-pitch), [1, 0, 0]);
+    mat4.rotate(this.mvMatrix, degToRad(-this.player.rotation),   [0, 1, 0]);
+    mat4.translate(this.mvMatrix, [-playerPosition[0], -playerPosition[1], -playerPosition[2]]);
 
     /* DRAW WORLD */
     this.gl.activeTexture(this.gl.TEXTURE0);
@@ -145,10 +175,15 @@ Renderer.prototype.drawScene = function drawScene() {
 
     this.setMatrixUniforms();
     this.gl.drawArrays(this.gl.TRIANGLES, 0, worldVertexPositionBuffer.numItems);
-
+    
+    /* DRAW ENEMIES */
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[2]);
+    this.gl.uniform1i(shaderProgram.samplerUniform, 0);
+    for(var i = 0; i < this.enemies.length; i++) {
+        this.enemies[i].draw(this.mvMatrix);
+    }
 
     /* DRAW HANDS */
-    
     mat4.identity(this.mvMatrix);
     this.gl.disable(this.gl.DEPTH_TEST);
     this.gl.activeTexture(this.gl.TEXTURE0);
@@ -241,6 +276,22 @@ Renderer.prototype.handleLoadedWorld = function handleLoadedWorld (response) {
         }
     }
 
+
+    for (var index in walls) {
+        wall = walls[index];
+        wallVertices = wall.vertices;
+        for (var i = 0; i < wallVertices.length; i++) {
+            vertex = wallVertices[i];
+            vertexPosition = vertex.position;
+            vertexCoord = vertex.texture;
+            vertexPosition[2] -= 5.0;
+            vertexPositions.push(vertexPosition[0], vertexPosition[1], vertexPosition[2]);
+            vertexTextureCoords.push(vertexCoord[0], vertexCoord[1]);
+            vertexCount++;
+        }
+        if(wall.boundary) this.registerBoundary(wall.vertices);
+    }
+
     worldVertexPositionBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, worldVertexPositionBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexPositions), this.gl.STATIC_DRAW);
@@ -265,10 +316,10 @@ Renderer.prototype.handleLoadedWorld = function handleLoadedWorld (response) {
     setHandSprite.call(this, 0);
 }
 
-var quadOrigin = [0.0, -0.23, -1.0];
+var quadOrigin = [0.0, -0.022, -0.1];
 var states = [
-    { offset: [0.1, 0.765], size: [0.12, 0.20], drawSize:  [0.8, 0.9] },
-    { offset: [0.355, 0.730], size: [0.12, 0.260], drawSize:  [0.8, 1.25] },
+    { offset: [0.1, 0.77], size: [0.135, 0.20], drawSize:  [0.08, 0.08] },
+    { offset: [0.358, 0.745], size: [0.12, 0.260], drawSize:  [0.08, 0.110] },
 ];
 function setHandSprite (index) {
     var sprite     = states[index];
@@ -283,10 +334,10 @@ function setHandSprite (index) {
     var positionEndY   = quadOrigin[1] + (quadHeight * 0.5);
 
     handsVertices = [
-        positionStartX, positionEndY, quadOrigin[2],
-          positionEndX, positionEndY, quadOrigin[2],
-        positionStartX,   positionStartY, quadOrigin[2],
-          positionEndX,   positionStartY, quadOrigin[2]
+        positionStartX,   positionEndY, quadOrigin[2],
+          positionEndX,   positionEndY, quadOrigin[2],
+        positionStartX, positionStartY, quadOrigin[2],
+          positionEndX, positionStartY, quadOrigin[2]
     ];
 
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(handsVertices), this.gl.STATIC_DRAW);
@@ -319,7 +370,7 @@ Renderer.prototype.initTextures = function initTextures(textures) {
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[i]);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textures[i].image);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-        // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_LINEAR);
+        // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST_MIPMAP_NEAREST);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
         this.gl.generateMipmap(this.gl.TEXTURE_2D);
         //this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
@@ -355,7 +406,7 @@ Renderer.prototype.registerBoundary = function registerBoundary(vertices) {
         }
 
         // represent boundary as [x1, x2, z1, z2];
-        // console.log([smallestX, greatestX, smallestZ, greatestZ])
+        // this will not work for diagonal walls...
         boundaries.push([smallestX, greatestX, smallestZ, greatestZ]);
     }
 }

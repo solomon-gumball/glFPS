@@ -20,50 +20,38 @@ Loading.pipe(Controller);
 Controller.on('doneLoading', goToMenu);
 Controller.on('newGame', startGame);
 
-var spritesheet = {
-	type: 'image',
-	source: '../Assets/crate.gif',
-	data: {}
-};
-
-var spritesheet = {
-	type: 'image',
-	source: '../Assets/metal2.png',
-	data: {}
-};
-
-var handImage = {
-	type: 'image',
-	source: '../Assets/handsSpritesheet.png',
-	data: {}
-}
-
-var vertexShader = {
-	type: 'xml',
-	source: '/Shaders/VertexShader.glsl',
-	data: {}
-};
-
-var fragmentShader = {
-	type: 'xml',
-	source: '/Shaders/FragmentShader.glsl',
-	data: {}
-};
-
-var worldData = {
-	type: 'xml',
-	source: '/GameData/world.json',
-	data: {}
-}
+var assets = [
+	{
+		type: 'image',
+		source: '../Assets/metal2.png',
+		data: {}
+	},{
+		type: 'image',
+		source: '../Assets/handsSpritesheet.png',
+		data: {}
+	},{
+		type: 'xml',
+		source: '/Shaders/VertexShader.glsl',
+		data: {}
+	},{
+		type: 'xml',
+		source: '/Shaders/FragmentShader.glsl',
+		data: {}
+	},{
+		type: 'xml',
+		source: '/GameData/world.json',
+		data: {}
+	},{
+		type: 'image',
+		source: '../Assets/alienSprite.png',
+		data: {}
+	}
+]
 
 Loading.register(ImageLoader);
 Loading.register(XMLLoader);
 
-Loading.load(spritesheet);
-Loading.load(handImage);
-Loading.load(vertexShader);
-Loading.load(fragmentShader);
-Loading.load(worldData);
+Loading.load(assets);
 
 Engine.setState(Loading);
 

@@ -1,4 +1,5 @@
 var EventHandler       = require('../Events/EventHandler');
+var Timer              = require('../Utilities/Timer');
 
 var Engine             = {};
 
@@ -28,6 +29,7 @@ Engine.setState     = function setState(state)
 
 Engine.step         = function step(time)
 {
+	Timer.update();
 	var state = Engine.currentState;
 	if (state)
 	{

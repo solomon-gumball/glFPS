@@ -2,9 +2,14 @@ var KEY_MAP = require('./keymap.js');
 var KeyHandler = {};
 
 KeyHandler.init = function init() {
-	this._pressed = {};
+	this._activeKeys = {};
 	this._handlers = {};
 	this._updateFns = [];
+	this._press = {};
+
+	this.EVENTTYPES = {
+		'PRESS' : this._press
+	}
 
 	this.boundKeyDown = registerKeyDown.bind(this);
 	this.boundKeyUp = registerKeyUp.bind(this);
@@ -19,8 +24,8 @@ KeyHandler.update = function update() {
 	var updatesLength = this._updateFns.length;
 	var i;
 	
-	for(var key in this._pressed){
-		if(this._pressed[key] === true){
+	for(var key in this._activeKeys){
+		if(this._activeKeys[key] === true){
 			handlers = this._handlers[key];
 			if(handlers) {
 				handlersLength = handlers.length;
@@ -32,19 +37,29 @@ KeyHandler.update = function update() {
 	}
 
 	for (var i = 0; i < updatesLength; i++) {
-		this._updateFns[i](this._pressed);
+		this._updateFns[i](this._activeKeys);
 	}
 }
 
-KeyHandler.on = function on(key, callback) {
-	if( KEY_MAP[key] ) {
-		if(!this._handlers[key]) this._handlers[key] = [];
-		this._handlers[key].push(callback);
+KeyHandler.on = function on(eventName, callback) {
+	eventName = eventName.toUpperCase();
+	if( eventName.indexOf(':') !== -1 ) {
+		var eventName = eventName.split(':');
+		var key = eventName[0];
+		var type = eventName[1];
+		var storage = this.EVENTTYPES[eventName[1]];
+		if( !storage ) throw "invalid eventType";
+		if( !storage[key] ) storage[key] = [];
+		storage[key].push(callback);
 	}
-	else if (key === "update") {
+	else if( KEY_MAP.letters[eventName] ) {
+		if(!this._handlers[eventName]) this._handlers[eventName] = [];
+		this._handlers[eventName].push(callback);
+	}
+	else if (eventName === "UPDATE") {
 		this._updateFns.push(callback);
 	}
-	else throw "invalid key";
+	else throw "invalid eventName";
 }
 
 KeyHandler.off = function off(key, callback) {
@@ -58,20 +73,26 @@ KeyHandler.off = function off(key, callback) {
 			callbacks.splice(callbackIndex, 1);
 			if(!callbacks.length) {
 				delete callbacks;
-				delete this._pressed[key];
+				delete this._activeKeys[key];
 			}
 		}
 	}
 }
 
 function registerKeyDown(event) {
-	var keyName = KEY_MAP[event.keyCode];
-	if (keyName) this._pressed[keyName] = true;
+	var keyName = KEY_MAP.keys[event.keyCode];
+	var pressEvents = this._press[keyName];
+	if (keyName) this._activeKeys[keyName] = true;
+	if (pressEvents) {
+		for (var i = 0; i < pressEvents.length; i++) {
+			pressEvents[i]();
+		}
+	}
 }
 
 function registerKeyUp(event) {
-	var keyName = KEY_MAP[event.keyCode];
-	if (keyName) this._pressed[keyName] = false;
+	var keyName = KEY_MAP.keys[event.keyCode];
+	if (keyName) this._activeKeys[keyName] = false;
 }
 
 module.exports = KeyHandler;

@@ -26,6 +26,18 @@ var spritesheet = {
 	data: {}
 };
 
+var spritesheet = {
+	type: 'image',
+	source: '../Assets/metal2.png',
+	data: {}
+};
+
+var handImage = {
+	type: 'image',
+	source: '../Assets/handsSpritesheet.png',
+	data: {}
+}
+
 var vertexShader = {
 	type: 'xml',
 	source: '/Shaders/VertexShader.glsl',
@@ -40,7 +52,7 @@ var fragmentShader = {
 
 var worldData = {
 	type: 'xml',
-	source: '/GameData/world.txt',
+	source: '/GameData/world.json',
 	data: {}
 }
 
@@ -48,6 +60,7 @@ Loading.register(ImageLoader);
 Loading.register(XMLLoader);
 
 Loading.load(spritesheet);
+Loading.load(handImage);
 Loading.load(vertexShader);
 Loading.load(fragmentShader);
 Loading.load(worldData);

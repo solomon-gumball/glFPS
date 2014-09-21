@@ -19,7 +19,12 @@ Playing.initialize = function initialize()
 {
 	KeyHandler.init();
 	MouseTracker.init();
-	this.renderer = new Renderer({ texture: '../Assets/crate.gif' });
+	this.renderer = new Renderer({
+		textures: [
+			'../Assets/metal2.png',
+			'../Assets/handsSpritesheet.png'
+		]
+	});
 };
 
 Playing.update     = function update()
